@@ -72,7 +72,7 @@ dotnet run
 ```
 
 The API will start at:
-- `https://localhost:7000` (or check your terminal for the exact port)
+- `https://localhost:7063` (or check your terminal for the exact port)
 
 ---
 
@@ -119,13 +119,13 @@ The Angular app will be available at:
 |-----------|--------------------------------------------------------------------------------------|
 | **Admin** | Full access — manage users, change roles, manage vendors, view all data              |
 | **Vendor**| Can manage their own profile, submit and view their vendor-related data              |
-| **User**  | Basic access — can view portal content and their own profile only                    |
-
----
+| **Procurement**  | Review and approve vendor information                                         |
+| **Finance**  | Verify financial and tax details                                                  |
+----------------------------------------------------------------------------------------------------
 
 ## 🔑 Admin Role Setup (First Time Only — Manual Step Required)
-
-> ⚠️ **Important:** The very first Admin must be set up **manually** in the database.
+> After Register on Portal user have only vendot access
+> ⚠️ **Important:** The very first Admin must be set up **manually** in the database. insert the UserRoles table with Admin role
 
 ### Steps to Create the First Admin:
 
@@ -138,8 +138,8 @@ Go to `http://localhost:4200` and register normally.
 Open **SQL Server Management Studio (SSMS)** or any DB client and run:
 
 ```sql
-SELECT Id, UserName, Email 
-FROM AspNetUsers 
+SELECT *
+FROM Users 
 WHERE Email = 'your-email@example.com';
 ```
 
@@ -148,19 +148,18 @@ Copy the `Id` value of the user.
 #### Step 3 — Find the Admin Role ID
 
 ```sql
-SELECT Id, Name 
-FROM AspNetRoles 
-WHERE Name = 'Admin';
+SELECT * 
+FROM Roles;
 ```
 
 Copy the `Id` value of the Admin role.
 
 #### Step 4 — Assign the Admin Role Manually
 
-Insert a record into the `AspNetUserRoles` table:
+Insert a record into the `UserRoles` table:
 
 ```sql
-INSERT INTO AspNetUserRoles (UserId, RoleId)
+INSERT INTO UserRoles (UserId, RoleId)
 VALUES ('YOUR_USER_ID', 'YOUR_ROLE_ID');
 ```
 
