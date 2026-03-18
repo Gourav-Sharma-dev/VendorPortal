@@ -1,0 +1,123 @@
+<!-- ── Page Header ─────────────────────────────── -->
+<div class="vp-page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+  <div>
+    <h4><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</h4>
+    <p>Welcome back, <strong>{{ username }}</strong></p>
+  </div>
+</div>
+
+<!-- ══ VENDOR ROLE VIEW ══════════════════════════════════════════ -->
+<ng-container *ngIf="hasRole('Vendor')">
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-md-3">
+      <div class="vp-stat">
+        <div class="vp-stat-icon" style="background:#eff6ff;color:#1a56db;"><i class="bi bi-file-earmark-text"></i></div>
+        <div>
+          <div class="vp-stat-count" style="color:#1a56db;">{{ myVendor ? 1 : 0 }}</div>
+          <div class="vp-stat-label">My Registration</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="vp-stat">
+        <div class="vp-stat-icon" style="background:#fffbeb;color:#d97706;"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+          <div class="vp-stat-count" style="color:#d97706;font-size:1rem;">{{ myVendor?.status || '—' }}</div>
+          <div class="vp-stat-label">Current Status</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!myVendor" class="alert alert-info d-flex align-items-center gap-2 py-2">
+    <i class="bi bi-info-circle-fill"></i>
+    <div class="small">
+      <strong>Get started!</strong> You have not registered as a vendor yet.
+      <a routerLink="/app/vendor/register" class="ms-1 fw-semibold">Register now →</a>
+    </div>
+  </div>
+
+  <div *ngIf="myVendor" class="alert alert-success d-flex align-items-center gap-2 py-2">
+    <i class="bi bi-check-circle-fill"></i>
+    <div class="small">
+      Your vendor application is <strong>{{ myVendor.status }}</strong>.
+      <a routerLink="/app/vendor/dashboard" class="ms-1 fw-semibold">View details →</a>
+    </div>
+  </div>
+</ng-container>
+
+<!-- ══ ADMIN / PROCUREMENT / FINANCE VIEW ════════════════════════ -->
+<ng-container *ngIf="hasRole('Admin','Procurement','Finance')">
+
+  <!-- Stat cards -->
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3">
+      <div class="vp-stat">
+        <div class="vp-stat-icon" style="background:#eff6ff;color:#1a56db;"><i class="bi bi-buildings"></i></div>
+        <div>
+          <div class="vp-stat-count" style="color:#1a56db;">{{ totalVendors }}</div>
+          <div class="vp-stat-label">Total Vendors</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="vp-stat">
+        <div class="vp-stat-icon" style="background:#fffbeb;color:#d97706;"><i class="bi bi-clock-history"></i></div>
+        <div>
+          <div class="vp-stat-count" style="color:#d97706;">{{ pendingCount }}</div>
+          <div class="vp-stat-label">Pending Review</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="vp-stat">
+        <div class="vp-stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-check2-circle"></i></div>
+        <div>
+          <div class="vp-stat-count" style="color:#16a34a;">{{ activeCount }}</div>
+          <div class="vp-stat-label">Active Vendors</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="vp-stat">
+        <div class="vp-stat-icon" style="background:#fff1f2;color:#dc2626;"><i class="bi bi-x-circle"></i></div>
+        <div>
+          <div class="vp-stat-count" style="color:#dc2626;">{{ rejectedCount }}</div>
+          <div class="vp-stat-label">Rejected</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="vp-card card">
+    <div class="vp-card-header card-header d-flex align-items-center gap-2">
+      <i class="bi bi-lightning-charge text-primary"></i>
+      <span class="fw-semibold small">Quick Actions</span>
+    </div>
+    <div class="card-body py-2">
+      <div class="row g-2">
+        <div class="col-6 col-md-3">
+          <a routerLink="/app/vendors" class="btn btn-outline-primary btn-sm w-100">
+            <i class="bi bi-card-list me-1"></i>All Vendors
+          </a>
+        </div>
+        <div class="col-6 col-md-3" *ngIf="hasRole('Admin','Procurement')">
+          <a routerLink="/app/approval" class="btn btn-outline-warning btn-sm w-100">
+            <i class="bi bi-check2-circle me-1"></i>Approvals
+          </a>
+        </div>
+        <div class="col-6 col-md-3">
+          <a routerLink="/app/reports" class="btn btn-outline-success btn-sm w-100">
+            <i class="bi bi-bar-chart-line me-1"></i>Reports
+          </a>
+        </div>
+        <div class="col-6 col-md-3" *ngIf="hasRole('Admin')">
+          <a routerLink="/app/admin/users" class="btn btn-outline-secondary btn-sm w-100">
+            <i class="bi bi-people me-1"></i>Manage Users
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

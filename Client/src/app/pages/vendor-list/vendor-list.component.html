@@ -1,0 +1,108 @@
+<!-- ── Page Header ─────────────────────────────── -->
+<div class="vp-page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+  <div>
+    <h4><i class="bi bi-card-list me-2 text-primary"></i>All Vendors</h4>
+    <p>Manage and review all registered vendors</p>
+  </div>
+  <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+    {{ vendors.length }} total
+  </span>
+</div>
+
+<!-- ── Filters ─────────────────────────────────── -->
+<div class="vp-card card mb-3">
+  <div class="vp-filter-bar">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label">Search</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+          <input [(ngModel)]="search" type="text" class="form-control" placeholder="Name, email, company…"
+            style="border-radius:0 7px 7px 0;" />
+        </div>
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Status</label>
+        <select [(ngModel)]="statusFilter" class="form-select form-select-sm" style="width:160px;">
+          <option value="">All Statuses</option>
+          <option>Submitted</option>
+          <option>UnderReview</option>
+          <option>FinanceVerification</option>
+          <option>CorrectionRequested</option>
+          <option>Approved</option>
+          <option>Active</option>
+          <option>Rejected</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Type</label>
+        <select [(ngModel)]="typeFilter" class="form-select form-select-sm" style="width:150px;">
+          <option value="">All Types</option>
+          <option>Manufacturer</option>
+          <option>Distributor</option>
+          <option>ServiceProvider</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Loading ─────────────────────────────────── -->
+<div *ngIf="loading" class="vp-card card vp-loading d-flex align-items-center">
+  <div class="spinner-border text-primary" style="width:2rem;height:2rem;"></div>
+  <p class="text-muted mt-2 small mb-0">Loading vendors…</p>
+</div>
+
+<!-- ── Table ──────────────────────────────────── -->
+<div *ngIf="!loading" class="vp-card card">
+  <div class="table-responsive">
+    <table class="table vp-table align-middle">
+      <thead>
+        <tr>
+          <th>Vendor</th>
+          <th style="width:140px;">Type</th>
+          <th style="width:150px;">Contact</th>
+          <th>Email</th>
+          <th style="width:120px;">GST No.</th>
+          <th style="width:160px;">Status</th>
+          <th style="width:90px;" class="text-center pe-3">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="filtered.length === 0">
+          <td colspan="7">
+            <div class="vp-empty">
+              <i class="bi bi-inbox"></i>
+              <p>No vendors found matching your filters</p>
+            </div>
+          </td>
+        </tr>
+        <tr *ngFor="let v of filtered">
+          <td>
+            <div class="fw-semibold" style="color:#1e293b;">{{ v.vendorName }}</div>
+            <div class="text-muted" style="font-size:.775rem;">{{ v.companyName }}</div>
+          </td>
+          <td>
+            <span class="badge rounded-pill px-3" style="background:#f1f5f9;color:#475569;font-size:.75rem;">{{
+              v.vendorType }}</span>
+          </td>
+          <td style="font-size:.845rem;color:#334155;">{{ v.contactPerson }}</td>
+          <td style="font-size:.825rem;color:#64748b;">{{ v.emailAddress }}</td>
+          <td><span class="vp-code">{{ v.gstNumber || '—' }}</span></td>
+          <td>
+            <span class="badge rounded-pill px-3 py-1" [ngClass]="statusClass(v.status)">{{ v.status }}</span>
+          </td>
+          <td class="text-center pe-3">
+            <a [routerLink]="['/app/vendors', v.vendorId]" class="btn btn-sm btn-outline-primary px-2 py-1"
+              style="border-radius:7px;font-size:.8rem;">
+              <i class="bi bi-eye me-1"></i>View
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="vp-table-footer">
+    Showing <strong>{{ filtered.length }}</strong> of <strong>{{ vendors.length }}</strong> vendors
+  </div>
+</div>

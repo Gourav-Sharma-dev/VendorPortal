@@ -1,0 +1,300 @@
+<!-- Back + Header -->
+<div class="mb-3">
+  <a routerLink="/app/vendors" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Back to Vendors
+  </a>
+</div>
+
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary"></div>
+</div>
+
+<ng-container *ngIf="!loading && vendor">
+  <!-- Header -->
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-0">{{ vendor.vendorName }}</h4>
+      <p class="text-muted mb-0 small">
+        <code>{{ vendor.vendorCode }}</code> &bull; {{ vendor.vendorType }} &bull; {{ vendor.companyName }}
+      </p>
+    </div>
+    <span class="badge fs-6 px-3 py-2" [ngClass]="statusClass(vendor.status)">{{ vendor.status }}</span>
+  </div>
+
+  <!-- Action alerts -->
+  <div *ngIf="actionMsg" class="alert alert-success py-2"><i class="bi bi-check-circle me-1"></i>{{ actionMsg }}</div>
+  <div *ngIf="actionError" class="alert alert-danger py-2"><i class="bi bi-exclamation-circle me-1"></i>{{ actionError }}</div>
+
+  <!-- Approval Actions -->
+  <div class="card border-0 shadow-sm mb-4" *ngIf="hasRole('Admin','Procurement','Finance')">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-gear me-2"></i>Approval Actions
+    </div>
+    <div class="card-body d-flex gap-2 flex-wrap align-items-center">
+      <!-- Procurement approve -->
+      <button *ngIf="vendor.status === 'Submitted' && hasRole('Admin','Procurement')"
+              class="btn btn-primary btn-sm" [disabled]="actionLoading" (click)="triggerAction('procurement')">
+        <i class="bi bi-check-circle me-1"></i>Procurement Approve
+      </button>
+      <!-- Finance approve -->
+      <button *ngIf="vendor.status === 'FinanceVerification' && hasRole('Admin','Finance')"
+              class="btn btn-success btn-sm" [disabled]="actionLoading" (click)="triggerAction('finance')">
+        <i class="bi bi-bank me-1"></i>Finance Approve
+      </button>
+      <!-- Activate (manual Admin action) -->
+      <button *ngIf="vendor.status === 'Approved' && hasRole('Admin')"
+              class="btn btn-success btn-sm" [disabled]="actionLoading" (click)="triggerAction('activate')"
+              title="Manual activation by Admin — system does not auto-activate approved vendors">
+        <i class="bi bi-lightning me-1"></i>Activate Vendor
+      </button>
+      <!-- Request Correction -->
+      <button *ngIf="['Submitted','UnderReview','FinanceVerification'].includes(vendor.status) && hasRole('Admin','Procurement')"
+              class="btn btn-warning btn-sm" [disabled]="actionLoading" (click)="triggerAction('correction')">
+        <i class="bi bi-pencil me-1"></i>Request Correction
+      </button>
+      <!-- Reject -->
+      <button *ngIf="['Submitted','UnderReview','FinanceVerification'].includes(vendor.status) && hasRole('Admin','Procurement')"
+              class="btn btn-danger btn-sm" [disabled]="actionLoading" (click)="triggerAction('reject')">
+        <i class="bi bi-x-circle me-1"></i>Reject
+      </button>
+    </div>
+    <!-- Activate info note -->
+    <div *ngIf="vendor.status === 'Approved' && hasRole('Admin')" class="card-body border-top py-2">
+      <p class="mb-0 small text-muted">
+        <i class="bi bi-info-circle me-1 text-info"></i>
+        <strong>Activation is a manual Admin action.</strong> After Finance approves the vendor, an Admin must
+        click <em>Activate Vendor</em> to make the vendor Active in the system. The system does not auto-activate vendors.
+      </p>
+    </div>
+
+    <!-- Remark Input -->
+    <div *ngIf="showRemarkBox" class="card-body border-top">
+      <label class="form-label fw-medium small">Remark / Reason</label>
+      <textarea [(ngModel)]="remarks" class="form-control mb-2" rows="2" placeholder="Enter reason..."></textarea>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary btn-sm" (click)="confirmAction()" [disabled]="!remarks.trim()">
+          <i class="bi bi-check me-1"></i>Confirm
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" (click)="showRemarkBox = false">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Details -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold text-primary">
+          <i class="bi bi-person-lines-fill me-2"></i>Basic Information
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Vendor Name</dt><dd class="col-7">{{ vendor.vendorName }}</dd>
+            <dt class="col-5 text-muted">Type</dt><dd class="col-7">{{ vendor.vendorType }}</dd>
+            <dt class="col-5 text-muted">Contact Person</dt><dd class="col-7">{{ vendor.contactPerson }}</dd>
+            <dt class="col-5 text-muted">Mobile</dt><dd class="col-7">{{ vendor.mobileNumber }}</dd>
+            <dt class="col-5 text-muted">Email</dt><dd class="col-7">{{ vendor.emailAddress }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold text-primary">
+          <i class="bi bi-building me-2"></i>Business Details
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Company</dt><dd class="col-7">{{ vendor.companyName }}</dd>
+            <dt class="col-5 text-muted">Address</dt><dd class="col-7">{{ vendor.companyAddress }}</dd>
+            <dt class="col-5 text-muted">City / State</dt><dd class="col-7">{{ vendor.city }}, {{ vendor.state }}</dd>
+            <dt class="col-5 text-muted">Pin / Country</dt><dd class="col-7">{{ vendor.pinCode }}, {{ vendor.country }}</dd>
+            <dt class="col-5 text-muted">GST</dt><dd class="col-7"><code>{{ vendor.gstNumber }}</code></dd>
+            <dt class="col-5 text-muted">PAN</dt><dd class="col-7"><code>{{ vendor.panNumber }}</code></dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <!-- Bank Details -->
+    <div class="col-md-6" *ngIf="vendor.bankDetail">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold text-primary">
+          <i class="bi bi-bank me-2"></i>Bank Details
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Bank</dt><dd class="col-7">{{ vendor.bankDetail.bankName }}</dd>
+            <dt class="col-5 text-muted">Branch</dt><dd class="col-7">{{ vendor.bankDetail.branchName }}</dd>
+            <dt class="col-5 text-muted">Account No</dt><dd class="col-7"><code>{{ vendor.bankDetail.accountNumber }}</code></dd>
+            <dt class="col-5 text-muted">IFSC</dt><dd class="col-7"><code>{{ vendor.bankDetail.ifscCode }}</code></dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Remarks -->
+  <div *ngIf="vendor.procurementRemarks || vendor.financeRemarks" class="alert mb-3"
+       [class.alert-warning]="vendor.status === 'CorrectionRequested'"
+       [class.alert-danger]="vendor.status === 'Rejected'"
+       [class.alert-info]="vendor.status !== 'CorrectionRequested' && vendor.status !== 'Rejected'">
+    <div class="d-flex align-items-start gap-2">
+      <i class="bi bi-chat-left-text-fill fs-5 flex-shrink-0 mt-1"></i>
+      <div>
+        <strong class="d-block mb-1">
+          <span *ngIf="vendor.status === 'CorrectionRequested'">Correction Remarks</span>
+          <span *ngIf="vendor.status === 'Rejected'">Rejection Remarks</span>
+          <span *ngIf="vendor.status !== 'CorrectionRequested' && vendor.status !== 'Rejected'">Remarks</span>
+        </strong>
+        <div *ngIf="vendor.procurementRemarks" class="mb-1">
+          <span class="fw-semibold">Procurement:</span> {{ vendor.procurementRemarks }}
+        </div>
+        <div *ngIf="vendor.financeRemarks">
+          <span class="fw-semibold">Finance:</span> {{ vendor.financeRemarks }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documents -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-file-earmark-text me-2"></i>Uploaded Documents
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr><th>Document Type</th><th>File</th><th>Size</th><th>Mandatory</th><th>Uploaded At</th><th class="text-center">Actions</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="documents.length === 0">
+            <td colspan="6" class="text-center text-muted py-3">No documents uploaded yet</td>
+          </tr>
+          <tr *ngFor="let doc of documents">
+            <td><span class="badge bg-secondary-subtle text-secondary">{{ doc.documentType }}</span></td>
+            <td><i class="bi bi-file-earmark me-1 text-muted"></i>{{ doc.fileName }}</td>
+            <td class="text-muted">{{ (doc.fileSize / 1024) | number:'1.0-0' }} KB</td>
+            <td>
+              <span class="badge" [class]="doc.isMandatory ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary'">
+                {{ doc.isMandatory ? 'Mandatory' : 'Optional' }}
+              </span>
+            </td>
+            <td>{{ doc.uploadedAt | date:'dd MMM yyyy' }}</td>
+            <td class="text-center">
+              <div class="d-flex gap-1 justify-content-center">
+                <button class="btn btn-sm btn-outline-primary" title="Preview" (click)="downloadAndPreview(doc)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success" title="Download" (click)="downloadFile(doc)">
+                  <i class="bi bi-download"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Status History -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-clock-history me-2"></i>Status History
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr><th>Date</th><th>Status</th><th>Action By</th><th>Remarks</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="history.length === 0">
+            <td colspan="4" class="text-center text-muted py-3">No history yet</td>
+          </tr>
+          <tr *ngFor="let h of history">
+            <td>{{ h.actionDate | date:'dd MMM yyyy, HH:mm' }}</td>
+            <td><span class="badge" [ngClass]="statusClass(h.newStatus)">{{ h.newStatus }}</span></td>
+            <td>{{ h.actionBy }}</td>
+            <td>{{ h.remarks || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Status Reference -->
+  <div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white fw-semibold text-secondary">
+      <i class="bi bi-info-circle me-2"></i>Status Reference
+    </div>
+    <div class="card-body p-0">
+      <table class="table table-sm mb-0 small">
+        <thead class="table-light">
+          <tr><th style="width:160px;">Status</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge bg-primary-subtle text-primary">Submitted</span></td>
+            <td>Vendor submitted application</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-warning-subtle text-warning">Under Review</span></td>
+            <td>Procurement team reviewing</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-warning text-white">Finance Verification</span></td>
+            <td>Finance validating tax / bank details</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-danger-subtle text-danger">Correction Requested</span></td>
+            <td>Vendor sent back to fix issues — vendor can edit and resubmit</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-success-subtle text-success">Approved</span></td>
+            <td>Vendor approved — waiting for Admin to manually activate</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-danger text-white">Rejected</span></td>
+            <td>Vendor rejected — vendor cannot proceed further</td>
+          </tr>
+          <tr>
+            <td><span class="badge bg-success text-white">Active</span></td>
+            <td>Vendor activated in system by Admin (manual action)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</ng-container>
+
+<!-- Preview Modal -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="previewDoc$" style="background:rgba(0,0,0,.6);">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fw-semibold">
+          <i class="bi bi-file-earmark me-2"></i>{{ previewDoc$.documentType }}
+        </h6>
+        <button class="btn-close" (click)="previewDoc$ = null"></button>
+      </div>
+      <div class="modal-body text-center p-2" style="min-height:400px;">
+        <iframe *ngIf="previewDoc$.fileFormat === '.pdf'" [src]="previewUrl"
+          style="width:100%;height:500px;border:none;"></iframe>
+        <img *ngIf="['.jpg','.jpeg','.png'].includes(previewDoc$.fileFormat)" [src]="previewUrl"
+          class="img-fluid rounded" />
+        <p *ngIf="!['.pdf','.jpg','.jpeg','.png'].includes(previewDoc$.fileFormat)" class="text-muted pt-5">
+          Preview not available.
+          <button class="btn btn-link p-0 align-baseline" (click)="downloadPreviewedFile()">
+            Download file
+          </button>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success btn-sm" (click)="downloadPreviewedFile()">
+          <i class="bi bi-download me-1"></i>Download
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" (click)="previewDoc$ = null">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

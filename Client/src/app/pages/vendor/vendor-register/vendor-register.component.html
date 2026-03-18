@@ -1,0 +1,214 @@
+<!-- Page Header -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 class="fw-bold mb-0">Vendor Registration</h4>
+    <p class="text-muted mb-0">Fill in all required details to register as a vendor</p>
+  </div>
+</div>
+
+<!-- Step Indicator -->
+<div class="d-flex align-items-center mb-4">
+  <ng-container *ngFor="let s of steps; let last = last">
+    <div class="d-flex flex-column align-items-center" style="min-width:80px;">
+      <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+           style="width:36px;height:36px;font-size:14px;"
+           [ngClass]="currentStep > s.id ? 'bg-success text-white' : currentStep === s.id ? 'bg-primary text-white' : 'bg-light text-muted border'">
+        <i *ngIf="currentStep > s.id" class="bi bi-check"></i>
+        <span *ngIf="currentStep <= s.id">{{ s.id }}</span>
+      </div>
+      <small class="mt-1 text-center" style="font-size:11px;"
+             [class.text-primary]="currentStep === s.id"
+             [class.fw-semibold]="currentStep === s.id"
+             [class.text-success]="currentStep > s.id"
+             [class.text-muted]="currentStep < s.id">{{ s.label }}</small>
+    </div>
+    <div *ngIf="!last" class="flex-grow-1 border-top mx-1"
+         [class.border-success]="currentStep > s.id" style="margin-bottom:20px;"></div>
+  </ng-container>
+</div>
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+
+  <!-- ===== STEP 1: Basic Details ===== -->
+  <div *ngIf="currentStep === 1" class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-person-lines-fill me-2"></i>Basic Details
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Vendor Name <span class="text-danger">*</span></label>
+          <input formControlName="vendorName" type="text" class="form-control"
+                 [class.is-invalid]="f['vendorName'].invalid && f['vendorName'].touched"
+                 placeholder="Legal business name" />
+          <div class="invalid-feedback">Vendor name is required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Vendor Type <span class="text-danger">*</span></label>
+          <select formControlName="vendorType" class="form-select"
+                  [class.is-invalid]="f['vendorType'].invalid && f['vendorType'].touched">
+            <option value="">Select type</option>
+            <option value="Manufacturer">Manufacturer</option>
+            <option value="Distributor">Distributor</option>
+            <option value="ServiceProvider">Service Provider</option>
+          </select>
+          <div class="invalid-feedback">Vendor type is required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Contact Person <span class="text-danger">*</span></label>
+          <input formControlName="contactPerson" type="text" class="form-control"
+                 [class.is-invalid]="f['contactPerson'].invalid && f['contactPerson'].touched"
+                 placeholder="Primary contact name" />
+          <div class="invalid-feedback">Contact person is required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Mobile Number <span class="text-danger">*</span></label>
+          <input formControlName="mobileNumber" type="text" class="form-control"
+                 [class.is-invalid]="f['mobileNumber'].invalid && f['mobileNumber'].touched"
+                 placeholder="10-digit mobile" maxlength="10" />
+          <div class="invalid-feedback">Valid 10-digit mobile required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Email Address <span class="text-danger">*</span></label>
+          <input formControlName="emailAddress" type="email" class="form-control"
+                 [class.is-invalid]="f['emailAddress'].invalid && f['emailAddress'].touched"
+                 placeholder="Business email" />
+          <div class="invalid-feedback">Valid email is required</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STEP 2: Business Details ===== -->
+  <div *ngIf="currentStep === 2" class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-building me-2"></i>Business Details
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Company Name <span class="text-danger">*</span></label>
+          <input formControlName="companyName" type="text" class="form-control"
+                 [class.is-invalid]="f['companyName'].invalid && f['companyName'].touched" />
+          <div class="invalid-feedback">Company name is required</div>
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-medium">Company Address <span class="text-danger">*</span></label>
+          <textarea formControlName="companyAddress" class="form-control" rows="2"
+                    [class.is-invalid]="f['companyAddress'].invalid && f['companyAddress'].touched"></textarea>
+          <div class="invalid-feedback">Address is required</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-medium">City <span class="text-danger">*</span></label>
+          <input formControlName="city" type="text" class="form-control"
+                 [class.is-invalid]="f['city'].invalid && f['city'].touched" />
+          <div class="invalid-feedback">City is required</div>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-medium">State <span class="text-danger">*</span></label>
+          <input formControlName="state" type="text" class="form-control"
+                 [class.is-invalid]="f['state'].invalid && f['state'].touched" />
+          <div class="invalid-feedback">State is required</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-medium">Pin Code <span class="text-danger">*</span></label>
+          <input formControlName="pinCode" type="text" class="form-control" maxlength="6"
+                 [class.is-invalid]="f['pinCode'].invalid && f['pinCode'].touched" />
+          <div class="invalid-feedback">6-digit pin required</div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-medium">Country <span class="text-danger">*</span></label>
+          <input formControlName="country" type="text" class="form-control"
+                 [class.is-invalid]="f['country'].invalid && f['country'].touched" />
+          <div class="invalid-feedback">Country is required</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STEP 3: Tax Details ===== -->
+  <div *ngIf="currentStep === 3" class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-file-earmark-text me-2"></i>Tax Details
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-medium">GST Number <span class="text-danger">*</span></label>
+          <input formControlName="gstNumber" type="text" class="form-control text-uppercase"
+                 [class.is-invalid]="f['gstNumber'].invalid && f['gstNumber'].touched"
+                 placeholder="e.g. 27AAPFU0939F1ZV" maxlength="15" />
+          <div class="invalid-feedback">Valid 15-char GST number required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">PAN Number <span class="text-danger">*</span></label>
+          <input formControlName="panNumber" type="text" class="form-control text-uppercase"
+                 [class.is-invalid]="f['panNumber'].invalid && f['panNumber'].touched"
+                 placeholder="e.g. AAPFU0939F" maxlength="10" />
+          <div class="invalid-feedback">Valid 10-char PAN number required</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STEP 4: Bank Details ===== -->
+  <div *ngIf="currentStep === 4" formGroupName="bankDetail" class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-bank me-2"></i>Bank Details
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Bank Name <span class="text-danger">*</span></label>
+          <input formControlName="bankName" type="text" class="form-control"
+                 [class.is-invalid]="bankDetail['bankName'].invalid && bankDetail['bankName'].touched" />
+          <div class="invalid-feedback">Bank name is required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Branch Name <span class="text-danger">*</span></label>
+          <input formControlName="branchName" type="text" class="form-control"
+                 [class.is-invalid]="bankDetail['branchName'].invalid && bankDetail['branchName'].touched" />
+          <div class="invalid-feedback">Branch name is required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">Account Number <span class="text-danger">*</span></label>
+          <input formControlName="accountNumber" type="text" class="form-control"
+                 [class.is-invalid]="bankDetail['accountNumber'].invalid && bankDetail['accountNumber'].touched" />
+          <div class="invalid-feedback">Account number is required</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">IFSC Code <span class="text-danger">*</span></label>
+          <input formControlName="ifscCode" type="text" class="form-control text-uppercase" maxlength="11"
+                 [class.is-invalid]="bankDetail['ifscCode'].invalid && bankDetail['ifscCode'].touched"
+                 placeholder="e.g. SBIN0001234" />
+          <div class="invalid-feedback">Valid IFSC code required</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts -->
+  <div *ngIf="errorMsg" class="alert alert-danger py-2">
+    <i class="bi bi-exclamation-circle me-1"></i>{{ errorMsg }}
+  </div>
+  <div *ngIf="successMsg" class="alert alert-success py-2">
+    <i class="bi bi-check-circle me-1"></i>{{ successMsg }}
+  </div>
+
+  <!-- Navigation -->
+  <div class="d-flex justify-content-between mt-3">
+    <button type="button" class="btn btn-outline-secondary" *ngIf="currentStep > 1" (click)="prevStep()">
+      <i class="bi bi-arrow-left me-1"></i>Previous
+    </button>
+    <div class="ms-auto">
+      <button type="button" class="btn btn-primary" *ngIf="currentStep < 4" (click)="nextStep()">
+        Next <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+      <button type="submit" class="btn btn-success" *ngIf="currentStep === 4" [disabled]="loading">
+        <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+        <i *ngIf="!loading" class="bi bi-check-circle me-1"></i>
+        {{ loading ? 'Submitting...' : 'Submit Registration' }}
+      </button>
+    </div>
+  </div>
+</form>

@@ -1,0 +1,546 @@
+<!-- Loading -->
+<div *ngIf="loading" class="text-center py-5">
+  <div class="spinner-border text-primary"></div>
+  <p class="mt-2 text-muted">Loading...</p>
+</div>
+
+<!-- No vendors yet -->
+<ng-container *ngIf="!loading && allVendors.length === 0">
+  <div class="alert alert-info d-flex align-items-center gap-2">
+    <i class="bi bi-info-circle-fill fs-5"></i>
+    <div>You have not registered as a vendor yet.
+      <a routerLink="/app/vendor/register" class="ms-1 fw-semibold">Register now →</a>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Multi-Vendor Selector (shown when user has more than 1 vendors) -->
+<ng-container *ngIf="!loading && allVendors.length > 1">
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-diagram-3 me-2"></i>Your Vendor Applications
+    </div>
+    <div class="card-body p-2">
+      <div class="row g-2">
+        <div class="col-md-4 col-sm-6" *ngFor="let v of allVendors">
+          <button class="btn w-100 text-start border p-3 rounded"
+                  [class.border-primary]="vendor?.vendorId === v.vendorId"
+                  [class.bg-primary-subtle]="vendor?.vendorId === v.vendorId"
+                  (click)="selectVendor(v)">
+            <div class="fw-semibold small">{{ v.vendorName }}</div>
+            <div class="text-muted" style="font-size:11px;">{{ v.companyName }}</div>
+            <span class="badge mt-1" [ngClass]="statusClass(v.status)" style="font-size:10px;">{{ v.status }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-container *ngIf="!loading && vendor">
+  <!-- Header -->
+  <div class="d-flex align-items-start justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="fw-bold mb-0">My Vendor Profile</h4>
+      <p class="text-muted mb-0 small">
+        Vendor Code: <code>{{ vendor.vendorCode ?? '—' }}</code> &bull; {{ vendor.vendorName }}
+      </p>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <span class="badge fs-6 px-3 py-2" [ngClass]="statusClass(vendor.status)">{{ vendor.status }}</span>
+      <a routerLink="/app/vendor/register" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-plus-circle me-1"></i>Register Another
+      </a>
+    </div>
+  </div>
+
+  <!-- Success after edit -->
+  <div *ngIf="editMsg" class="alert alert-success py-2 mb-3">
+    <i class="bi bi-check-circle me-1"></i>{{ editMsg }}
+  </div>
+
+  <!-- REJECTED BANNER -->
+  <div *ngIf="vendor.status === 'Rejected'" class="alert alert-danger mb-3">
+    <div class="d-flex align-items-start gap-2">
+      <i class="bi bi-x-circle-fill fs-5 mt-1 flex-shrink-0"></i>
+      <div>
+        <strong class="d-block mb-1">Application Rejected</strong>
+        <div *ngIf="vendor.procurementRemarks" class="mb-1">
+          <span class="badge bg-danger-subtle text-danger me-1">Procurement Remark</span>
+          {{ vendor.procurementRemarks }}
+        </div>
+        <div *ngIf="vendor.financeRemarks">
+          <span class="badge bg-danger-subtle text-danger me-1">Finance Remark</span>
+          {{ vendor.financeRemarks }}
+        </div>
+        <div *ngIf="!vendor.procurementRemarks && !vendor.financeRemarks" class="text-muted small">
+          Please contact the admin for more information.
+        </div>
+        <div class="mt-2">
+          <a routerLink="/app/vendor/register" class="btn btn-sm btn-danger">
+            <i class="bi bi-plus-circle me-1"></i>Submit New Application
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CORRECTION REQUESTED BANNER -->
+  <div *ngIf="vendor.status === 'CorrectionRequested' && !editMode" class="alert alert-warning mb-3">
+    <div class="d-flex align-items-start gap-2">
+      <i class="bi bi-exclamation-triangle-fill fs-5 mt-1 flex-shrink-0"></i>
+      <div class="flex-grow-1">
+        <strong class="d-block mb-1">Correction Required</strong>
+        <div *ngIf="vendor.procurementRemarks" class="mb-1">
+          <span class="badge bg-warning-subtle text-warning me-1">Procurement</span>
+          {{ vendor.procurementRemarks }}
+        </div>
+        <div *ngIf="vendor.financeRemarks" class="mb-1">
+          <span class="badge bg-warning-subtle text-warning me-1">Finance</span>
+          {{ vendor.financeRemarks }}
+        </div>
+        <div *ngIf="!vendor.procurementRemarks && !vendor.financeRemarks" class="text-muted small">
+          Please review and update your application.
+        </div>
+        <button class="btn btn-sm btn-warning mt-2" (click)="openEditMode()">
+          <i class="bi bi-pencil-square me-1"></i>Edit &amp; Resubmit Application
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INLINE EDIT FORM -->
+  <div *ngIf="editMode" class="card border-warning shadow-sm mb-4">
+    <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center">
+      <span class="fw-semibold text-warning-emphasis">
+        <i class="bi bi-pencil-square me-2"></i>Edit Application — Step {{ editStep }} of 4
+      </span>
+      <button class="btn btn-sm btn-outline-secondary" (click)="cancelEdit()">
+        <i class="bi bi-x me-1"></i>Cancel
+      </button>
+    </div>
+    <div class="card-body">
+      <!-- Step indicator -->
+      <div class="d-flex align-items-center mb-4">
+        <ng-container *ngFor="let s of editSteps; let last = last">
+          <div class="d-flex flex-column align-items-center" style="min-width:70px;">
+            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                 style="width:30px;height:30px;font-size:12px;"
+                 [ngClass]="editStep > s.id ? 'bg-success text-white' : editStep === s.id ? 'bg-primary text-white' : 'bg-light text-muted border'">
+              <i *ngIf="editStep > s.id" class="bi bi-check"></i>
+              <span *ngIf="editStep <= s.id">{{ s.id }}</span>
+            </div>
+            <small class="mt-1 text-center" style="font-size:10px;"
+                   [class.text-primary]="editStep === s.id" [class.fw-semibold]="editStep === s.id"
+                   [class.text-success]="editStep > s.id" [class.text-muted]="editStep < s.id">{{ s.label }}</small>
+          </div>
+          <div *ngIf="!last" class="flex-grow-1 border-top mx-1"
+               [class.border-success]="editStep > s.id" style="margin-bottom:20px;"></div>
+        </ng-container>
+      </div>
+
+      <form [formGroup]="editForm" novalidate>
+        <!-- Step 1 -->
+        <div *ngIf="editStep === 1">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Vendor Name <span class="text-danger">*</span></label>
+              <input formControlName="vendorName" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="ef['vendorName'].invalid && ef['vendorName'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Vendor Type <span class="text-danger">*</span></label>
+              <select formControlName="vendorType" class="form-select form-select-sm"
+                      [class.is-invalid]="ef['vendorType'].invalid && ef['vendorType'].touched">
+                <option value="">Select type</option>
+                <option value="Manufacturer">Manufacturer</option>
+                <option value="Distributor">Distributor</option>
+                <option value="ServiceProvider">Service Provider</option>
+              </select>
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Contact Person <span class="text-danger">*</span></label>
+              <input formControlName="contactPerson" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="ef['contactPerson'].invalid && ef['contactPerson'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Mobile Number <span class="text-danger">*</span></label>
+              <input formControlName="mobileNumber" type="text" class="form-control form-control-sm" maxlength="10"
+                     [class.is-invalid]="ef['mobileNumber'].invalid && ef['mobileNumber'].touched" />
+              <div class="invalid-feedback">Valid 10-digit mobile required</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Email Address <span class="text-danger">*</span></label>
+              <input formControlName="emailAddress" type="email" class="form-control form-control-sm"
+                     [class.is-invalid]="ef['emailAddress'].invalid && ef['emailAddress'].touched" />
+              <div class="invalid-feedback">Valid email required</div>
+            </div>
+          </div>
+        </div>
+        <!-- Step 2 -->
+        <div *ngIf="editStep === 2">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Company Name <span class="text-danger">*</span></label>
+              <input formControlName="companyName" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="ef['companyName'].invalid && ef['companyName'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-medium small">Company Address <span class="text-danger">*</span></label>
+              <textarea formControlName="companyAddress" class="form-control form-control-sm" rows="2"
+                        [class.is-invalid]="ef['companyAddress'].invalid && ef['companyAddress'].touched"></textarea>
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-medium small">City <span class="text-danger">*</span></label>
+              <input formControlName="city" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="ef['city'].invalid && ef['city'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-medium small">State <span class="text-danger">*</span></label>
+              <input formControlName="state" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="ef['state'].invalid && ef['state'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-medium small">Pin Code <span class="text-danger">*</span></label>
+              <input formControlName="pinCode" type="text" class="form-control form-control-sm" maxlength="6"
+                     [class.is-invalid]="ef['pinCode'].invalid && ef['pinCode'].touched" />
+              <div class="invalid-feedback">6-digit required</div>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-medium small">Country <span class="text-danger">*</span></label>
+              <input formControlName="country" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="ef['country'].invalid && ef['country'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+          </div>
+        </div>
+        <!-- Step 3 -->
+        <div *ngIf="editStep === 3">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">GST Number <span class="text-danger">*</span></label>
+              <input formControlName="gstNumber" type="text" class="form-control form-control-sm text-uppercase"
+                     maxlength="15" placeholder="e.g. 27AAPFU0939F1ZV"
+                     [class.is-invalid]="ef['gstNumber'].invalid && ef['gstNumber'].touched" />
+              <div class="invalid-feedback">Valid 15-char GST required</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">PAN Number <span class="text-danger">*</span></label>
+              <input formControlName="panNumber" type="text" class="form-control form-control-sm text-uppercase"
+                     maxlength="10" placeholder="e.g. AAPFU0939F"
+                     [class.is-invalid]="ef['panNumber'].invalid && ef['panNumber'].touched" />
+              <div class="invalid-feedback">Valid 10-char PAN required</div>
+            </div>
+          </div>
+        </div>
+        <!-- Step 4 -->
+        <div *ngIf="editStep === 4" formGroupName="bankDetail">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Bank Name <span class="text-danger">*</span></label>
+              <input formControlName="bankName" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="eBank['bankName'].invalid && eBank['bankName'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Branch Name <span class="text-danger">*</span></label>
+              <input formControlName="branchName" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="eBank['branchName'].invalid && eBank['branchName'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">Account Number <span class="text-danger">*</span></label>
+              <input formControlName="accountNumber" type="text" class="form-control form-control-sm"
+                     [class.is-invalid]="eBank['accountNumber'].invalid && eBank['accountNumber'].touched" />
+              <div class="invalid-feedback">Required</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-medium small">IFSC Code <span class="text-danger">*</span></label>
+              <input formControlName="ifscCode" type="text" class="form-control form-control-sm text-uppercase"
+                     maxlength="11" placeholder="e.g. SBIN0001234"
+                     [class.is-invalid]="eBank['ifscCode'].invalid && eBank['ifscCode'].touched" />
+              <div class="invalid-feedback">Valid IFSC required</div>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <div *ngIf="editError" class="alert alert-danger py-2 small mt-3">
+        <i class="bi bi-exclamation-circle me-1"></i>{{ editError }}
+      </div>
+      <div class="d-flex justify-content-between mt-3">
+        <button type="button" class="btn btn-sm btn-outline-secondary" *ngIf="editStep > 1" (click)="editPrevStep()">
+          <i class="bi bi-chevron-left me-1"></i>Previous
+        </button>
+        <span *ngIf="editStep === 1"></span>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-sm btn-primary" *ngIf="editStep < 4" (click)="editNextStep()">
+            Next <i class="bi bi-chevron-right ms-1"></i>
+          </button>
+          <button type="button" class="btn btn-sm btn-success" *ngIf="editStep === 4"
+                  (click)="submitEdit()" [disabled]="editLoading">
+            <span *ngIf="editLoading" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!editLoading" class="bi bi-send me-1"></i>
+            {{ editLoading ? 'Submitting...' : 'Submit for Review' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status Flow (hidden for Rejected) -->
+  <div class="card border-0 shadow-sm mb-4" *ngIf="vendor.status !== 'Rejected'">
+    <div class="card-body pb-2">
+      <p class="text-muted small fw-semibold mb-3 text-uppercase" style="font-size:11px;letter-spacing:.06em;">
+        Application Workflow</p>
+      <div class="d-flex align-items-center overflow-auto pb-1">
+        <ng-container *ngFor="let step of workflowSteps; let i = index; let last = last">
+          <div class="d-flex flex-column align-items-center text-center" style="min-width:90px;">
+            <div class="rounded-circle d-flex align-items-center justify-content-center mb-1"
+                 style="width:34px;height:34px;"
+                 [ngClass]="{
+                   'bg-success': workflowStepState(i) === 'done',
+                   'bg-primary': workflowStepState(i) === 'current',
+                   'bg-light border': workflowStepState(i) === 'pending',
+                   'bg-danger': workflowStepState(i) === 'rejected'
+                 }">
+              <i *ngIf="workflowStepState(i) === 'done'" class="bi bi-check-lg text-white" style="font-size:14px;"></i>
+              <i *ngIf="workflowStepState(i) === 'current'" [class]="'bi ' + step.icon + ' text-white'" style="font-size:13px;"></i>
+              <i *ngIf="workflowStepState(i) === 'pending'" [class]="'bi ' + step.icon + ' text-secondary'" style="font-size:13px;"></i>
+            </div>
+            <small style="font-size:10px;line-height:1.3;"
+              [class.text-primary]="workflowStepState(i) === 'current'"
+              [class.fw-semibold]="workflowStepState(i) === 'current'"
+              [class.text-success]="workflowStepState(i) === 'done'"
+              [class.text-muted]="workflowStepState(i) === 'pending'">{{ step.label }}</small>
+          </div>
+          <div *ngIf="!last" class="flex-grow-1 border-top mx-1" style="min-width:16px;margin-bottom:24px;"
+               [class.border-success]="workflowStepState(i) === 'done'"></div>
+        </ng-container>
+      </div>
+      <!-- Draft gate warning -->
+      <div *ngIf="vendor.status === 'Submitted' && !hasMandatoryDocs" class="alert alert-warning py-2 mt-3 mb-0 small">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>Action Required:</strong> Please upload your <strong>GST Certificate</strong> and <strong>PAN Card</strong>
+        documents below. Your application will remain in <em>Draft</em> state until both mandatory documents are uploaded.
+      </div>
+      <div *ngIf="vendor.status === 'Submitted' && hasMandatoryDocs" class="alert alert-success py-2 mt-3 mb-0 small">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        Mandatory documents uploaded. Your application is <strong>submitted</strong> and under review.
+      </div>
+      <div *ngIf="vendor.status === 'CorrectionRequested'" class="mt-2 text-center small text-danger">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>Correction requested — please edit and resubmit your application.
+      </div>
+    </div>
+  </div>
+
+  <!-- Details (hidden when editing) -->
+  <div class="row g-3 mb-4" *ngIf="!editMode">
+    <!-- Basic Info -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold text-primary">
+          <i class="bi bi-person-lines-fill me-2"></i>Basic Information
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Vendor Name</dt>
+            <dd class="col-7">{{ vendor.vendorName }}</dd>
+            <dt class="col-5 text-muted">Type</dt>
+            <dd class="col-7">{{ vendor.vendorType }}</dd>
+            <dt class="col-5 text-muted">Contact Person</dt>
+            <dd class="col-7">{{ vendor.contactPerson }}</dd>
+            <dt class="col-5 text-muted">Mobile</dt>
+            <dd class="col-7">{{ vendor.mobileNumber }}</dd>
+            <dt class="col-5 text-muted">Email</dt>
+            <dd class="col-7">{{ vendor.emailAddress }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <!-- Business Info -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold text-primary">
+          <i class="bi bi-building me-2"></i>Business Details
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Company</dt>
+            <dd class="col-7">{{ vendor.companyName }}</dd>
+            <dt class="col-5 text-muted">Address</dt>
+            <dd class="col-7">{{ vendor.companyAddress }}</dd>
+            <dt class="col-5 text-muted">City/State</dt>
+            <dd class="col-7">{{ vendor.city }}, {{ vendor.state }}</dd>
+            <dt class="col-5 text-muted">GST</dt>
+            <dd class="col-7"><code>{{ vendor.gstNumber }}</code></dd>
+            <dt class="col-5 text-muted">PAN</dt>
+            <dd class="col-7"><code>{{ vendor.panNumber }}</code></dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank Info -->
+    <div class="col-md-6" *ngIf="vendor.bankDetail">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white fw-semibold text-primary">
+          <i class="bi bi-bank me-2"></i>Bank Details
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">Bank</dt>
+            <dd class="col-7">{{ vendor.bankDetail.bankName }}</dd>
+            <dt class="col-5 text-muted">Branch</dt>
+            <dd class="col-7">{{ vendor.bankDetail.branchName }}</dd>
+            <dt class="col-5 text-muted">Account No</dt>
+            <dd class="col-7 d-flex align-items-center gap-2">
+              <code>{{ showAccountNo ? vendor.bankDetail.accountNumber : '••••••••••' }}</code>
+              <button class="btn btn-link p-0 text-secondary" style="font-size:12px;" (click)="showAccountNo = !showAccountNo"
+                      [title]="showAccountNo ? 'Hide' : 'Show'">
+                <i class="bi" [class.bi-eye]="!showAccountNo" [class.bi-eye-slash]="showAccountNo"></i>
+              </button>
+            </dd>
+            <dt class="col-5 text-muted">IFSC</dt>
+            <dd class="col-7 d-flex align-items-center gap-2">
+              <code>{{ showIfsc ? vendor.bankDetail.ifscCode : '••••••••••' }}</code>
+              <button class="btn btn-link p-0 text-secondary" style="font-size:12px;" (click)="showIfsc = !showIfsc"
+                      [title]="showIfsc ? 'Hide' : 'Show'">
+                <i class="bi" [class.bi-eye]="!showIfsc" [class.bi-eye-slash]="showIfsc"></i>
+              </button>
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div><!-- end row -->
+
+
+  <!-- Upload Documents -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-upload me-2"></i>Upload Document
+    </div>
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label small fw-medium">Document Type</label>
+          <select [(ngModel)]="selectedDocType" class="form-select form-select-sm">
+            <option value="">Select type...</option>
+            <option value="GSTCertificate">GST Certificate</option>
+            <option value="PANCard">PAN Card</option>
+            <option value="BankStatement">Bank Statement</option>
+            <option value="IncorporationCertificate">Incorporation Certificate</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-5">
+          <label class="form-label small fw-medium">File</label>
+          <input type="file" class="form-control form-control-sm" (change)="onFileChange($event)"
+            accept=".pdf,.jpg,.jpeg,.png" />
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-primary btn-sm w-100" (click)="upload()"
+            [disabled]="uploadLoading || !selectedFile || !selectedDocType">
+            <span *ngIf="uploadLoading" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!uploadLoading" class="bi bi-cloud-arrow-up me-1"></i>
+            {{ uploadLoading ? 'Uploading...' : 'Upload' }}
+          </button>
+        </div>
+      </div>
+      <div *ngIf="uploadMsg" class="alert alert-success py-2 small mt-2">
+        <i class="bi bi-check-circle me-1"></i>{{ uploadMsg }}
+      </div>
+      <div *ngIf="uploadError" class="alert alert-danger py-2 small mt-2">
+        <i class="bi bi-exclamation-circle me-1"></i>{{ uploadError }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Document List -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white fw-semibold text-primary">
+      <i class="bi bi-folder2-open me-2"></i>Uploaded Documents
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light">
+          <tr>
+            <th>Document Type</th>
+            <th>File Name</th>
+            <th>Size</th>
+            <th>Uploaded At</th>
+            <th>Required</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="documents.length === 0">
+            <td colspan="6" class="text-center text-muted py-4">No documents uploaded yet</td>
+          </tr>
+          <tr *ngFor="let doc of documents">
+            <td><span class="badge bg-secondary-subtle text-secondary">{{ doc.documentType }}</span></td>
+            <td><i class="bi bi-file-earmark me-1 text-muted"></i>{{ doc.fileName }}</td>
+            <td class="text-muted">{{ (doc.fileSize / 1024) | number:'1.0-0' }} KB</td>
+            <td>{{ doc.uploadedAt | date:'dd MMM yyyy, HH:mm' }}</td>
+            <td>
+              <span class="badge"
+                [ngClass]="doc.isMandatory ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success'">
+                {{ doc.isMandatory ? 'Required' : 'Optional' }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="d-flex gap-1 justify-content-center">
+                <button class="btn btn-sm btn-outline-primary" title="Preview" (click)="downloadAndPreview(doc)">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success" title="Download" (click)="downloadFile(doc)">
+                  <i class="bi bi-download"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</ng-container>
+
+<!-- Preview Modal -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="previewDoc$" style="background:rgba(0,0,0,.6);">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title fw-semibold">
+          <i class="bi bi-file-earmark me-2"></i>{{ previewDoc$.documentType }}
+        </h6>
+        <button class="btn-close" (click)="previewDoc$ = null"></button>
+      </div>
+      <div class="modal-body text-center p-2" style="min-height:400px;">
+        <iframe *ngIf="previewDoc$.fileFormat === '.pdf'" [src]="previewUrl"
+          style="width:100%;height:500px;border:none;"></iframe>
+        <img *ngIf="['.jpg','.jpeg','.png'].includes(previewDoc$.fileFormat)" [src]="previewUrl"
+          class="img-fluid rounded" />
+        <p *ngIf="!['.pdf','.jpg','.jpeg','.png'].includes(previewDoc$.fileFormat)" class="text-muted pt-5">
+          Preview not available.
+          <button class="btn btn-link p-0 align-baseline" (click)="downloadPreviewedFile()">
+            Download file
+          </button>
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-success btn-sm" (click)="downloadPreviewedFile()">
+          <i class="bi bi-download me-1"></i>Download
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" (click)="previewDoc$ = null">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

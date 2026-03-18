@@ -1,0 +1,12 @@
+.vp-auth-bg {
+  background: linear-gradient(135deg, #1e293b 0%, #1a56db 100%);
+}
+.vp-logo-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #1a56db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

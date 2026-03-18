@@ -1,0 +1,244 @@
+<!-- ══ Page Header ══════════════════════════════════════════════════ -->
+<div class="vp-page-header d-flex align-items-start justify-content-between flex-wrap gap-2">
+  <div>
+    <h4><i class="bi bi-bar-chart-line me-2 text-primary"></i>Reports</h4>
+    <p>Vendor registration and verification analytics</p>
+  </div>
+</div>
+
+<!-- ══ Summary Stat Cards ═══════════════════════════════════════════ -->
+<div class="row g-2 mb-3">
+  <div class="col-6 col-xl-3">
+    <div class="vp-stat">
+      <div class="vp-stat-icon" style="background:#eff6ff;color:#1a56db;"><i class="bi bi-buildings"></i></div>
+      <div>
+        <div class="vp-stat-count" style="color:#1a56db;">{{ registrationData.length }}</div>
+        <div class="vp-stat-label">Total Vendors</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="vp-stat">
+      <div class="vp-stat-icon" style="background:#fffbeb;color:#d97706;"><i class="bi bi-hourglass-split"></i></div>
+      <div>
+        <div class="vp-stat-count" style="color:#d97706;">{{ countByStatuses(['Submitted','UnderReview','FinanceVerification','CorrectionRequested']) }}</div>
+        <div class="vp-stat-label">In Review</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="vp-stat">
+      <div class="vp-stat-icon" style="background:#f0fdf4;color:#16a34a;"><i class="bi bi-check-circle-fill"></i></div>
+      <div>
+        <div class="vp-stat-count" style="color:#16a34a;">{{ countByStatuses(['Approved','Active']) }}</div>
+        <div class="vp-stat-label">Approved</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="vp-stat">
+      <div class="vp-stat-icon" style="background:#fff1f2;color:#dc2626;"><i class="bi bi-x-circle-fill"></i></div>
+      <div>
+        <div class="vp-stat-count" style="color:#dc2626;">{{ countByStatuses(['Rejected']) }}</div>
+        <div class="vp-stat-label">Rejected</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Main Card (Filters + Tabs + Table) ═══════════════════════════ -->
+<div class="vp-card card">
+
+  <!-- Filters Section -->
+  <div class="vp-filter-bar" style="border-radius:10px 10px 0 0;">
+    <div class="row g-2 align-items-end">
+      <div class="col-auto">
+        <label class="form-label">From Date</label>
+        <input [(ngModel)]="filter.fromDate" type="date" class="form-control form-control-sm" style="width:140px;" />
+      </div>
+      <div class="col-auto">
+        <label class="form-label">To Date</label>
+        <input [(ngModel)]="filter.toDate" type="date" class="form-control form-control-sm" style="width:140px;" />
+      </div>
+      <div class="col-auto">
+        <label class="form-label">Status</label>
+        <select [(ngModel)]="filter.status" class="form-select form-select-sm" style="width:160px;">
+          <option value="">All Statuses</option>
+          <option value="Submitted">Submitted</option>
+          <option value="UnderReview">Under Review</option>
+          <option value="FinanceVerification">Finance Verification</option>
+          <option value="CorrectionRequested">Correction Requested</option>
+          <option value="Approved">Approved</option>
+          <option value="Active">Active</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="col-auto" *ngIf="activeTab === 'registration'">
+        <label class="form-label">Vendor Type</label>
+        <select [(ngModel)]="filter.vendorType" class="form-select form-select-sm" style="width:160px;">
+          <option value="">All Types</option>
+          <option value="Manufacturer">Manufacturer</option>
+          <option value="Distributor">Distributor</option>
+          <option value="ServiceProvider">Service Provider</option>
+        </select>
+      </div>
+      <div class="col-auto d-flex gap-2 ms-auto">
+        <button class="btn btn-primary btn-sm px-3" (click)="load()" style="border-radius:8px;">
+          <i class="bi bi-search me-1"></i>Run Report
+        </button>
+        <button class="btn btn-outline-secondary btn-sm px-3" (click)="reset()" style="border-radius:8px;">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="vp-card-header card-header px-3 py-3">
+    <div class="vp-tabs">
+      <button class="vp-tab" [class.active]="activeTab === 'registration'" (click)="switchTab('registration')">
+        <i class="bi bi-file-earmark-bar-graph"></i>
+        Registration Report
+        <span class="vp-tab-count">{{ registrationData.length }}</span>
+      </button>
+      <button class="vp-tab" [class.active]="activeTab === 'verification'" (click)="switchTab('verification')">
+        <i class="bi bi-patch-check"></i>
+        Verification Report
+        <span class="vp-tab-count">{{ verificationData.length }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="vp-loading">
+    <div class="spinner-border text-primary" style="width:2rem;height:2rem;"></div>
+    <p class="text-muted mt-2 small mb-0">Loading report data…</p>
+  </div>
+
+  <!-- ── Registration Table ──────────────────── -->
+  <div *ngIf="!loading && activeTab === 'registration'" class="table-responsive">
+    <table class="table vp-table align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="ps-3" style="width:230px;">Vendor Code</th>
+          <th>Vendor Name</th>
+          <th style="width:150px;">Type</th>
+          <th style="width:140px;">Registered</th>
+          <th style="width:170px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="registrationData.length === 0">
+          <td colspan="5">
+            <div class="vp-empty">
+              <i class="bi bi-inbox"></i>
+              <p>No registration data found</p>
+            </div>
+          </td>
+        </tr>
+        <tr *ngFor="let r of registrationData">
+          <td class="ps-3">
+            <code style="font-size:11px; background:#f1f5f9; padding:2px 6px; border-radius:5px;">
+              {{ r.vendorCode ?? '—' }}
+            </code>
+          </td>
+          <td>
+            <div class="fw-semibold" style="color:#1e293b; font-size:.875rem;">{{ r.vendorName }}</div>
+          </td>
+          <td>
+            <span class="badge rounded-pill px-3"
+                  style="background:#f1f5f9; color:#475569; font-size:.75rem;">
+              {{ r.vendorType }}
+            </span>
+          </td>
+          <td style="color:#64748b;">
+            {{ r.registeredDate | date:'dd MMM yyyy' }}
+          </td>
+          <td>
+            <span class="badge rounded-pill px-3 py-1" [ngClass]="statusClass(r.status)">
+              {{ r.status }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Verification Table ─────────────────── -->
+  <div *ngIf="!loading && activeTab === 'verification'" class="table-responsive">
+    <table class="table vp-table align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="ps-3" style="width:230px;">Vendor Code</th>
+          <th>Vendor Name</th>
+          <th style="width:110px;" class="text-center">Procurement</th>
+          <th style="width:110px;" class="text-center">Finance</th>
+          <!-- <th style="width:150px;">Approved By</th> -->
+          <th style="width:140px;">Approved Date</th>
+          <th style="width:170px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="verificationData.length === 0">
+          <td colspan="7">
+            <div class="vp-empty">
+              <i class="bi bi-inbox"></i>
+              <p>No verification data found</p>
+            </div>
+          </td>
+        </tr>
+        <tr *ngFor="let r of verificationData">
+          <td class="ps-3">
+            <code style="font-size:11px; background:#f1f5f9; padding:2px 6px; border-radius:5px;">
+              {{ r.vendorCode ?? '—' }}
+            </code>
+          </td>
+          <td>
+            <div class="fw-semibold" style="color:#1e293b; font-size:.875rem;">{{ r.vendorName }}</div>
+          </td>
+          <!-- Procurement -->
+          <td class="text-center">
+            <span *ngIf="r.procurementApproved === true" class="verify-yes">
+              <i class="bi bi-check-lg"></i>Approved
+            </span>
+            <span *ngIf="r.procurementApproved === false" class="verify-no">
+              <i class="bi bi-x-lg"></i>No
+            </span>
+          </td>
+          <!-- Finance -->
+          <td class="text-center">
+            <span *ngIf="r.financeApproved === true" class="verify-yes">
+              <i class="bi bi-check-lg"></i>Approved
+            </span>
+            <span *ngIf="r.financeApproved === false" class="verify-no">
+              <i class="bi bi-x-lg"></i>No
+            </span>
+          </td>
+          <!-- Approved By -->
+          <!-- <td style="color:#334155; font-size:.845rem;">{{ r.approvedByUsername ?? '—' }}</td> -->
+          <!-- Date -->
+          <td style="color:#64748b; font-size:.845rem;">
+            {{ r.verifiedDate| date:'dd MMM yyyy' }}
+          </td>
+          <!-- Status -->
+          <td>
+            <span class="badge rounded-pill px-3 py-1" [ngClass]="statusClass(r.status)">
+              {{ r.status }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Footer -->
+  <div *ngIf="!loading" class="vp-table-footer">
+    <ng-container *ngIf="activeTab === 'registration'">
+      <strong>{{ registrationData.length }}</strong> record{{ registrationData.length !== 1 ? 's' : '' }} found
+    </ng-container>
+    <ng-container *ngIf="activeTab === 'verification'">
+      <strong>{{ verificationData.length }}</strong> record{{ verificationData.length !== 1 ? 's' : '' }} found
+    </ng-container>
+  </div>
+
+</div>

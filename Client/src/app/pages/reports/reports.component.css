@@ -1,0 +1,5 @@
+/* All layout styles handled by global styles.css */
+
+/* Verification badges (page-specific) */
+.verify-yes { display:inline-flex; align-items:center; gap:4px; background:#dcfce7; color:#16a34a; padding:2px 8px; border-radius:50px; font-size:.75rem; font-weight:600; }
+.verify-no  { display:inline-flex; align-items:center; gap:4px; background:#fee2e2; color:#dc2626; padding:2px 8px; border-radius:50px; font-size:.75rem; font-weight:600; }

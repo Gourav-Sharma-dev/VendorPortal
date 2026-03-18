@@ -1,0 +1,62 @@
+<div class="min-vh-100 d-flex align-items-center justify-content-center vp-auth-bg">
+  <div class="card shadow-lg border-0" style="width:100%;max-width:420px;">
+    <div class="card-body p-5">
+      <!-- Header -->
+      <div class="text-center mb-4">
+        <div class="vp-logo-circle mx-auto mb-3">
+          <i class="bi bi-building text-white fs-3"></i>
+        </div>
+        <h4 class="fw-bold mb-0">Vendor Portal</h4>
+        <p class="text-muted small mb-0">Inner Eye Consultancy Solutions</p>
+      </div>
+
+      <h5 class="fw-semibold mb-4">Sign In</h5>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+        <!-- Username -->
+        <div class="mb-3">
+          <label class="form-label fw-medium">Username</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input formControlName="username" type="text" class="form-control"
+                   [class.is-invalid]="f['username'].invalid && f['username'].touched"
+                   placeholder="Enter username" />
+            <div class="invalid-feedback">Username is required</div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-3">
+          <label class="form-label fw-medium">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input formControlName="password" [type]="showPwd ? 'text' : 'password'" class="form-control"
+                   [class.is-invalid]="f['password'].invalid && f['password'].touched"
+                   placeholder="Enter password" />
+            <button type="button" class="input-group-text btn btn-outline-secondary" (click)="showPwd = !showPwd">
+              <i [class]="showPwd ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+            <div class="invalid-feedback">Password is required</div>
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="errorMsg" class="alert alert-danger py-2 small">
+          <i class="bi bi-exclamation-circle me-1"></i>{{ errorMsg }}
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-primary w-100" [disabled]="loading">
+          <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+          {{ loading ? 'Signing in...' : 'Sign In' }}
+        </button>
+      </form>
+
+      <!-- Links -->
+      <div class="mt-4 text-center small d-flex flex-column gap-2">
+        <a routerLink="/auth/register"><i class="bi bi-person-plus me-1"></i>New vendor? Register here</a>
+        <a routerLink="/auth/reset-password"><i class="bi bi-key me-1"></i>Forgot password?</a>
+      </div>
+    </div>
+  </div>
+</div>

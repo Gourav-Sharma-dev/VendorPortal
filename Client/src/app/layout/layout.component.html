@@ -1,0 +1,119 @@
+<div class="vp-shell d-flex" style="height:100vh;overflow:hidden;">
+
+  <!-- ======= SIDEBAR ======= -->
+  <nav class="vp-sidebar d-flex flex-column flex-shrink-0 p-0" [class.vp-sidebar--collapsed]="collapsed">
+    <!-- Brand -->
+    <div class="vp-brand d-flex align-items-center gap-2 px-3 pt-3 pb-2 border-bottom border-secondary">
+      <i class="bi bi-building fs-4 text-info"></i>
+      <span class="vp-brand-text fw-bold text-white fs-6" *ngIf="!collapsed">Vendor Portal</span>
+    </div>
+
+    <!-- Nav links -->
+    <ul class="nav flex-column mt-2 flex-grow-1">
+
+      <!-- Dashboard — everyone -->
+      <li class="nav-item">
+        <a routerLink="/app/dashboard" routerLinkActive="active" class="nav-link vp-nav-link d-flex align-items-center gap-2">
+          <i class="bi bi-speedometer2"></i>
+          <span *ngIf="!collapsed">Dashboard</span>
+        </a>
+      </li>
+
+      <!-- VENDOR role -->
+      <ng-container *ngIf="hasRole('Vendor')">
+        <li class="vp-nav-section px-3 py-1 text-uppercase" *ngIf="!collapsed">
+          <small class="text-secondary fw-semibold" style="font-size:10px;letter-spacing:.08em;">My Vendor</small>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/app/vendor/register" routerLinkActive="active" class="nav-link vp-nav-link d-flex align-items-center gap-2">
+            <i class="bi bi-person-plus"></i>
+            <span *ngIf="!collapsed">Register Vendor</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/app/vendor/dashboard" routerLinkActive="active" class="nav-link vp-nav-link d-flex align-items-center gap-2">
+            <i class="bi bi-shop"></i>
+            <span *ngIf="!collapsed">My Vendor</span>
+          </a>
+        </li>
+      </ng-container>
+
+      <!-- ADMIN / PROCUREMENT / FINANCE -->
+      <ng-container *ngIf="hasRole('Admin','Procurement','Finance')">
+        <li class="vp-nav-section px-3 py-1 text-uppercase" *ngIf="!collapsed">
+          <small class="text-secondary fw-semibold" style="font-size:10px;letter-spacing:.08em;">Vendor Mgmt</small>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/app/vendors" routerLinkActive="active" class="nav-link vp-nav-link d-flex align-items-center gap-2">
+            <i class="bi bi-card-list"></i>
+            <span *ngIf="!collapsed">All Vendors</span>
+          </a>
+        </li>
+      </ng-container>
+
+      <ng-container *ngIf="hasRole('Admin','Procurement')">
+        <li class="nav-item">
+          <a routerLink="/app/approval" routerLinkActive="active" class="nav-link vp-nav-link d-flex align-items-center gap-2">
+            <i class="bi bi-check2-circle"></i>
+            <span *ngIf="!collapsed">Approvals</span>
+          </a>
+        </li>
+      </ng-container>
+
+      <ng-container *ngIf="hasRole('Admin','Procurement','Finance')">
+        <li class="vp-nav-section px-3 py-1 text-uppercase" *ngIf="!collapsed">
+          <small class="text-secondary fw-semibold" style="font-size:10px;letter-spacing:.08em;">Reports</small>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/app/reports" routerLinkActive="active" class="nav-link vp-nav-link d-flex align-items-center gap-2">
+            <i class="bi bi-bar-chart-line"></i>
+            <span *ngIf="!collapsed">Reports</span>
+          </a>
+        </li>
+      </ng-container>
+
+      <!-- ADMIN only -->
+      <ng-container *ngIf="hasRole('Admin')">
+        <li class="vp-nav-section px-3 py-1 text-uppercase" *ngIf="!collapsed">
+          <small class="text-secondary fw-semibold" style="font-size:10px;letter-spacing:.08em;">Administration</small>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/app/admin/users" routerLinkActive="active" class="nav-link vp-nav-link d-flex align-items-center gap-2">
+            <i class="bi bi-people"></i>
+            <span *ngIf="!collapsed">Users</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/app/admin/audit" routerLinkActive="active" class="nav-link vp-nav-link d-flex align-items-center gap-2">
+            <i class="bi bi-journal-text"></i>
+            <span *ngIf="!collapsed">Audit Logs</span>
+          </a>
+        </li>
+      </ng-container>
+
+    </ul>
+  </nav>
+
+  <!-- ======= MAIN AREA ======= -->
+  <div class="vp-main-col flex-grow-1">
+
+    <!-- Topbar -->
+    <header class="vp-topbar d-flex align-items-center px-3 gap-3 border-bottom bg-white shadow-sm">
+      <button class="btn btn-sm btn-outline-secondary" (click)="collapsed = !collapsed" title="Toggle sidebar">
+        <i class="bi bi-list fs-5"></i>
+      </button>
+      <span class="fw-semibold text-dark flex-grow-1">Vendor Portal</span>
+      <span class="badge bg-primary">{{ currentRoles }}</span>
+      <span class="text-muted small">{{ username }}</span>
+      <button class="btn btn-sm btn-outline-danger" (click)="logout()">
+        <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+      </button>
+    </header>
+
+    <!-- Page content -->
+    <main class="vp-content p-3 bg-light">
+      <router-outlet />
+    </main>
+
+  </div>
+</div>

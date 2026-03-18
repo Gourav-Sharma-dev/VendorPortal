@@ -1,0 +1,100 @@
+<!-- Page Header -->
+<div class="vp-page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+  <div>
+    <h4><i class="bi bi-check2-circle me-2 text-primary"></i>Approval Queue</h4>
+    <p>Review and process vendor applications</p>
+  </div>
+  <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2">
+    {{ vendors.length }} total
+  </span>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-2 mb-3">
+  <div class="col-6 col-sm-4 col-xl" *ngFor="let tab of tabs">
+    <div class="vp-stat">
+      <div class="vp-stat-icon"
+           [style.background]="tabIconBg(tab.key)"
+           [style.color]="tabIconColor(tab.key)">
+        <i class="bi" [ngClass]="tab.icon"></i>
+      </div>
+      <div>
+        <div class="vp-stat-count" [style.color]="tabIconColor(tab.key)">{{ count(tab.key) }}</div>
+        <div class="vp-stat-label">{{ tab.label }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab + Table Card -->
+<div class="vp-card card">
+
+  <!-- Tabs -->
+  <div class="vp-card-header card-header">
+    <div class="vp-tabs">
+      <button *ngFor="let tab of tabs"
+              class="vp-tab"
+              [class.active]="activeTab === tab.key"
+              (click)="activeTab = tab.key">
+        <i class="bi" [ngClass]="tab.icon"></i>
+        {{ tab.label }}
+        <span class="vp-tab-count">{{ count(tab.key) }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="vp-loading">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading" class="table-responsive">
+    <table class="table vp-table align-middle">
+      <thead>
+        <tr>
+          <th>Vendor</th>
+          <th style="width:130px;">Type</th>
+          <th style="width:150px;">Contact</th>
+          <th>Email</th>
+          <th style="width:110px;">Submitted</th>
+          <th style="width:90px;" class="text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="filtered.length === 0">
+          <td colspan="6">
+            <div class="vp-empty">
+              <i class="bi bi-inbox"></i>
+              <p>No vendors in <strong>{{ activeTab }}</strong></p>
+            </div>
+          </td>
+        </tr>
+        <tr *ngFor="let v of filtered">
+          <td>
+            <div class="fw-semibold">{{ v.vendorName }}</div>
+            <div class="text-muted" style="font-size:.775rem;">
+              <span class="vp-code">{{ v.vendorCode || '—' }}</span>
+              <span class="ms-1">{{ v.companyName }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge bg-secondary-subtle text-secondary rounded-pill">{{ v.vendorType }}</span>
+          </td>
+          <td class="text-muted">{{ v.contactPerson }}</td>
+          <td class="text-muted">{{ v.emailAddress }}</td>
+          <td class="text-muted">{{ v.createdAt | date:'dd MMM yy' }}</td>
+          <td class="text-center">
+            <a [routerLink]="['/app/vendors', v.vendorId]" class="btn btn-sm btn-outline-primary p-1">
+              <i class="bi bi-eye me-1"></i>Review
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!loading" class="vp-table-footer">
+    {{ filtered.length }} vendor{{ filtered.length !== 1 ? 's' : '' }} — <strong>{{ activeTab }}</strong>
+  </div>
+</div>
